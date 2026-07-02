@@ -14,6 +14,7 @@ dist/
 
 # Uploads (photos de pré-déclaration) — garder la structure, pas le contenu
 backend/src/MGFL.Api/wwwroot/uploads/**
+!backend/src/MGFL.Api/wwwroot/uploads/**/
 !backend/src/MGFL.Api/wwwroot/uploads/photos/.gitkeep
 
 # Expo / React Native
