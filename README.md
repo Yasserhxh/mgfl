@@ -45,6 +45,20 @@ dotnet run --project src/MGFL.Api # Swagger sur http://localhost:5080/swagger
 > Pour SQL Server, renseigner `ConnectionStrings:Default` dans `appsettings.json` —
 > les **migrations EF Core** (`src/MGFL.Infrastructure/Persistence/Migrations`) sont appliquées au démarrage.
 
+### Base de données (approche DB-first)
+
+Le dossier `database/` permet de créer la base **avant** de lancer l'API (le DBA garde la main) :
+
+```bash
+sqlcmd -S <serveur> -Q "CREATE DATABASE MGFL"
+sqlcmd -S <serveur> -d MGFL -i database/schema.sql -f 65001   # DDL idempotent (généré depuis les migrations EF)
+sqlcmd -S <serveur> -d MGFL -i database/seed.sql   -f 65001   # comptes de démo + référentiels (idempotent)
+```
+
+`schema.sql` renseigne aussi `__EFMigrationsHistory` : au démarrage, `Database.Migrate()` ne fait
+rien et le seeder applicatif se retire (données déjà présentes). Après toute nouvelle migration EF,
+regénérer le script : `dotnet ef migrations script --idempotent -p src/MGFL.Infrastructure -s src/MGFL.Infrastructure -o ../database/schema.sql`.
+
 ### Frontend (port 5173)
 ```bash
 cd frontend
