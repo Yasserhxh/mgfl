@@ -288,10 +288,53 @@ Utiliser **exclusivement les tokens** (`bg-primary`, `text-danger`, `border-line
 
 ---
 
-## 13. Premières étapes suggérées
+## 13. État d'implémentation & décisions (juillet 2026)
 
-1. Scaffolder la solution .NET (4 projets + tests) et le front Vite/React/TS.
-2. Modéliser le **Domain** (entités §5) + `MGFL.Domain.Tests` sur les **formules §7**.
-3. Implémenter le flux **Arrivage → état de base** de bout en bout (use case le plus à risque).
-4. Brancher l'auth JWT + RBAC, puis le CRUD des référentiels.
-5. Mobile (Expo) : écran de pré-déclaration + génération QR.
+> Contexte partagé pour toute session Claude Code sur ce repo. Le système est **implémenté et
+> testé de bout en bout** : ne pas re-scaffolder. Repo : `github.com/Yasserhxh/mgfl` (privé).
+
+### Ce qui existe
+- **Backend** : les 4 projets Clean Architecture + 3 projets de tests (**51 tests** : Domain 27,
+  Application 8, IntegrationTests 16 via `WebApplicationFactory`). Tous les flux §6 sont couverts :
+  pré-déclaration → pesage (contrôle de vraisemblance **bloquant**, 422 sans persistance) →
+  état de base (PDF QuestPDF, statut Imprimé au téléchargement) → sortie (`POST /api/arrivals/{code}/depart`,
+  libération automatique des emplacements). Réservations avec frais, prix versionnés, infractions,
+  CRUD référentiels (Articles/Transporters/Vehicles/Buyers/Packagings/MerchandiseOwners),
+  upload photos (`POST /api/uploads/photos`), scoping transporteur (`CreatedByUsername`).
+- **Frontend** : toutes les pages + auth JWT (garde de route, comptes de démo dans le README).
+  **41 tests Vitest**. Conforme §3 : TanStack Query (clés dans `lib/queryKeys.ts`, invalidation
+  après mutation) + React Hook Form + Zod (schemas colocalisés `features/*/schema.ts`).
+- **Mobile** (`mobile/`) : app Expo transporteur — login, voyages, pré-déclaration (photo + géoloc),
+  QR, file hors-ligne AsyncStorage avec upload différé des photos.
+- **CI** : `.github/workflows/ci.yml` (backend build+test, frontend test+build, mobile type-check).
+
+### Décisions structurantes (ne pas revenir dessus sans raison)
+- **Authz** : `FallbackPolicy` deny-by-default ; une policy par rôle (Admin passe partout) ;
+  policy composite `ReservationManager` (Commercant | AgentOrganisation | Admin).
+- **Persistance** : InMemory par défaut (zéro config, seed `DbSeeder`) ; SQL Server si
+  `ConnectionStrings:Default` renseignée → `Database.Migrate()` (migrations dans
+  `Infrastructure/Persistence/Migrations`, générées via `DesignTimeDbContextFactory`).
+- **Paramétrage métier** : `Plausibility:Tolerance` (0.15) et `Reservations:DailyRate` (250 MAD/j,
+  frais = jours **inclusifs** × tarif, min 1 jour) dans `appsettings.json`.
+- **Front dual-mode** : mock par défaut (aucun backend requis) ; `VITE_API_MODE=real` +
+  `VITE_API_URL` pour l'API. Le branchement mock/réel vit dans `src/lib/*` (jamais dans les
+  composants). Le store d'auth reste hors TanStack Query (état client, voulu).
+- **Mobile** : URL API dans `mobile/src/lib/config.ts` (défaut `10.0.2.2:5080`, émulateur Android).
+
+### Pièges connus (vérifiés à la dure)
+- **wwwroot** : le provider statique est un `PhysicalFileProvider` explicite créé au démarrage
+  (`Program.cs`) — le provider par défaut figerait un `NullFileProvider` si `wwwroot` manquait au
+  build de l'hôte. Le `.gitkeep` sous `wwwroot/uploads/photos/` est **obligatoire** ; le .gitignore
+  ré-inclut les dossiers (`!**/`) sinon la négation ne matche jamais.
+- **Zod** : zod v4 est installé mais l'API classique est importée via le sous-chemin **`zod/v3`**
+  (compatible `@hookform/resolvers`). Ne pas mélanger les imports `zod` et `zod/v3`.
+- **Vite 8 (rolldown)** exige `@vitejs/plugin-react` ≥ 5 — ne pas downgrader.
+- **Tests Intl** : le séparateur de milliers `fr-MA` diffère entre ICU navigateur et Node —
+  les assertions de formatage doivent rester agnostiques au séparateur (cf. `formatters.test.ts`).
+- **CI** : le job Frontend a échoué sur GitHub (exit 152 à `npm run build`, build local OK) —
+  à investiguer (suspect : binaire natif rolldown / mémoire du runner).
+
+### Reste à faire
+Employés (§5, seule entité manquante) + gestion par le commerçant (§8) ; enforcement des
+**26 palettes max** ; scan QR caméra côté pont à bascule ; rappel jeudi pour les prix ;
+notifications ; reporting ; e2e Playwright ; durcissement prod (clé JWT gérée, HTTPS, CORS pinné).
