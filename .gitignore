@@ -1,0 +1,25 @@
+# .NET
+bin/
+obj/
+*.user
+
+# Node
+node_modules/
+dist/
+.env
+*.tsbuildinfo
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Uploads (photos de pré-déclaration) — garder la structure, pas le contenu
+backend/src/MGFL.Api/wwwroot/uploads/**
+!backend/src/MGFL.Api/wwwroot/uploads/photos/.gitkeep
+
+# Expo / React Native
+.expo/
+
+# IDE
+.vs/
+.idea/
+*.DS_Store

@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "MGFL Transporteur",
+    "slug": "mgfl-transporteur",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#F8FAFC",
+    "primaryColor": "#1E3A8A",
+    "splash": {
+      "backgroundColor": "#1E3A8A",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ma.mgfl.transporteur"
+    },
+    "android": {
+      "package": "ma.mgfl.transporteur",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "L'application utilise votre position pour géolocaliser la pré-déclaration d'arrivée."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "L'application utilise la caméra pour photographier la marchandise."
+        }
+      ]
+    ]
+  }
+}
